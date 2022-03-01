@@ -85,6 +85,7 @@ class MyCustomFormState extends State<MyCustomForm> {
                           SnackBar(
                               content: Text('${createListController.text} created'),
                         ));
+                        Navigator.pop(context);
                       }
                     },
                     child: const Text('Create'),
