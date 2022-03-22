@@ -33,24 +33,15 @@ class MyCustomFormState extends State<MyCustomForm> {
 
   late int packingListId;
 
-  late PackingList packingList;
-
   late TextEditingController controller;
 
   MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
 
   @override
   void initState() {
-    this.controller = TextEditingController(text: packingList.title);
     this.packingListId = packingListId;
-    _getPackingList().then((value) => {
-      this.packingList = new PackingList(id: value.id, title: value.title)
-    });
+    this.controller = TextEditingController();
     super.initState();
-  }
-
-   Future<PackingList> _getPackingList() async {
-    return db.getPackingList(packingListId);
   }
 
   @override
@@ -61,25 +52,41 @@ class MyCustomFormState extends State<MyCustomForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 100,
-            ),
-            Text(packingList.title),
-            ElevatedButton(
-                onPressed: () => {
-                      openDialog(context),
-                    },
-                child: Icon(Icons.edit))
-          ],
-        ));
+    return new StreamBuilder<PackingList>(
+        stream: db.watchPackingListEntry(packingListId),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const SizedBox(
+              child: Text("No data"),
+            );
+          }
+          if (snapshot.hasError) {
+            return const Text('Something went wrong.');
+          }
+
+          PackingList pl = snapshot.requireData;
+          
+          return new Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 100,
+                  ),
+                  Text(pl.title),
+                  ElevatedButton(
+                      onPressed: () =>
+                      {
+                        openDialog(context, pl.id),
+                      },
+                      child: Icon(Icons.edit))
+                ],
+              ));
+        });
   }
 
-  Future openDialog(BuildContext context) => showDialog(
+  Future openDialog(BuildContext context, int id) => showDialog(
       context: context,
       builder: (context) => AlertDialog(
             title: Text('Packing list name'),
@@ -89,19 +96,19 @@ class MyCustomFormState extends State<MyCustomForm> {
             ),
             actions: [
               TextButton(
-                  onPressed: () => submit(context), child: Text('Submit'))
+                  onPressed: () => submit(context, id), child: Text('Submit'))
             ],
           ));
 
-  void submit(BuildContext context) {
-    _editPackingListEntry();
+  void submit(BuildContext context, int id) {
+    _editPackingListEntry(id);
     Navigator.of(context).pop();
   }
 
-  void _editPackingListEntry() {
+  void _editPackingListEntry(int id) {
     if (controller.text.isNotEmpty) {
       db.editPackingList(PackingListsCompanion(
-          id: Value.ofNullable(packingList.id),
+          id: Value.ofNullable(id),
           title: Value.ofNullable(controller.text)));
       controller.clear();
     }

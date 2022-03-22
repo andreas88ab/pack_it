@@ -37,6 +37,13 @@ class MyDatabase extends _$MyDatabase {
     return select(packingLists).watch();
   }
 
+  Stream<PackingList> watchPackingListEntry(int id) {
+
+    final query = select(packingLists)..where((tbl) => tbl.id.equals(id));
+
+    return query.watchSingle();
+  }
+
   Future<PackingList> getPackingList(int id) {
     final query = select(packingLists)..where((tbl) => tbl.id.equals(id));
 
