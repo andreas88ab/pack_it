@@ -1,147 +1,109 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
-import 'package:pack_it_v1/utils/utility.dart';
 import 'package:provider/provider.dart';
+import '../db/db.dart';
 import 'dart:developer';
 
-import '../db/db.dart';
+class ViewPackList extends StatelessWidget {
+  const ViewPackList({Key? key, required this.packingListId}) : super(key: key);
 
-class EditPackList extends StatelessWidget {
-  const EditPackList({Key? key, required this.packingList}) : super(key: key);
-
-  final PackingList packingList;
+  final int packingListId;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 100,
-              ),
-              MyCustomForm(packingList: packingList),
-            ],
-          )),
+      body: MyCustomForm(packingListId: packingListId),
     );
   }
 }
 
-// Create a Form widget.
 class MyCustomForm extends StatefulWidget {
-  const MyCustomForm({Key? key, required this.packingList}) : super(key: key);
+  const MyCustomForm({Key? key, required this.packingListId}) : super(key: key);
 
-  final PackingList packingList;
+  final int packingListId;
 
   @override
   MyCustomFormState createState() {
-    return MyCustomFormState(packingList: packingList);
+    return MyCustomFormState(packingListId: packingListId);
   }
 }
 
 class MyCustomFormState extends State<MyCustomForm> {
-  MyCustomFormState({required this.packingList});
+  MyCustomFormState({required this.packingListId});
+
+  late int packingListId;
 
   late PackingList packingList;
 
-  final _formKey = GlobalKey<FormState>();
-
-  late TextEditingController createListController;
-
-  @override
-  void initState() {
-    this.createListController = TextEditingController(text: packingList.title);
-    this.packingList = packingList;
-    super.initState();
-  }
+  late TextEditingController controller;
 
   MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
 
   @override
+  void initState() {
+    this.controller = TextEditingController(text: packingList.title);
+    this.packingListId = packingListId;
+    _getPackingList().then((value) => {
+      this.packingList = new PackingList(id: value.id, title: value.title)
+    });
+    super.initState();
+  }
+
+   Future<PackingList> _getPackingList() async {
+    return db.getPackingList(packingListId);
+  }
+
+  @override
   void dispose() {
-    createListController.dispose();
+    controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          new SizedBox(
-            height: 70,
-            child: TextFormField(
-              // The validator receives the text that the user has entered.
-              validator: (value) {
-                if (Utility.hasValue(value)) {
-                  return 'List name';
-                }
-                return null;
-              },
-              controller: createListController,
-              autofocus: true,
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 30.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 100,
             ),
-          ),
-          new SizedBox(
-            height: 70,
-            child: TextFormField(
-              // The validator receives the text that the user has entered.
-              validator: (value) {
-                if (Utility.hasValue(value)) {
-                  return 'List name';
-                }
-                return null;
-              },
-              controller: createListController,
+            Text(packingList.title),
+            ElevatedButton(
+                onPressed: () => {
+                      openDialog(context),
+                    },
+                child: Icon(Icons.edit))
+          ],
+        ));
+  }
+
+  Future openDialog(BuildContext context) => showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+            title: Text('Packing list name'),
+            content: TextField(
               autofocus: true,
+              controller: controller,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 30.0),
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    _editPackingListEntry();
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Edited'),
-                    ));
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('Edit'),
-              ),
-              Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: ElevatedButton.icon(
-                      onPressed: () {
-                        db.deletePackingList(
-                            PackingListsCompanion(id: Value.ofNullable(packingList.id)));
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('Deleted'),
-                        ));
-                        Navigator.pop(context);
-                      },
-                      icon: Icon(Icons.delete),
-                      label: const Text('Delete'),
-                      style: ElevatedButton.styleFrom(primary: Colors.red)))
-            ]),
-          ),
-        ],
-      ),
-    );
+            actions: [
+              TextButton(
+                  onPressed: () => submit(context), child: Text('Submit'))
+            ],
+          ));
+
+  void submit(BuildContext context) {
+    _editPackingListEntry();
+    Navigator.of(context).pop();
   }
 
   void _editPackingListEntry() {
-    if (createListController.text.isNotEmpty) {
+    if (controller.text.isNotEmpty) {
       db.editPackingList(PackingListsCompanion(
           id: Value.ofNullable(packingList.id),
-          title: Value.ofNullable(createListController.text)));
-      createListController.clear();
+          title: Value.ofNullable(controller.text)));
+      controller.clear();
     }
   }
 }

@@ -1,31 +1,70 @@
+import 'package:drift/native.dart';
+import 'package:pack_it_v1/db/tables.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'package:drift/drift.dart';
+import 'dart:io';
+import 'dart:developer';
 
-// assuming that your file is called filename.dart. This will give an error at first,
-// but it's needed for drift to know about the generated code
 part 'db.g.dart';
 
-// this will generate a table called "todos" for us. The rows of that table will
-// be represented by a class called "Todo".
-class Todos extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get title => text().withLength(min: 6, max: 32)();
-  TextColumn get content => text().named('body')();
-  IntColumn get category => integer().nullable()();
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'db.sqlite'));
+    return NativeDatabase(file);
+  });
 }
 
-// This will make drift generate a class called "Category" to represent a row in this table.
-// By default, "Categorie" would have been used because it only strips away the trailing "s"
-// in the table name.
-@DataClassName("Category")
-class Categories extends Table {
+@DriftDatabase(tables: [PackingLists, PackingListItems])
+class MyDatabase extends _$MyDatabase {
+  MyDatabase() : super(_openConnection());
 
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get description => text()();
+  @override
+  int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+      onCreate: (m) async {
+        await m.createAll();
+        await into(packingLists).insert(PackingListsCompanion.insert(title: "Test packinglist"));
+        await into(packingListItems).insert(PackingListItemsCompanion.insert(packingListId: 1, title: "Test packinglistitem"));
+      }
+  );
+
+  Stream<List<PackingList>> watchPackingListEntries() {
+    return select(packingLists).watch();
+  }
+
+  Future<PackingList> getPackingList(int id) {
+    final query = select(packingLists)..where((tbl) => tbl.id.equals(id));
+
+    return query.getSingle();
+  }
+
+  Future<int> addPackingList(PackingListsCompanion entry) {
+    return into(packingLists).insert(entry);
+  }
+
+  Future<bool> editPackingList(PackingListsCompanion entry) {
+    log("update item: $entry");
+    return update(packingLists).replace(entry);
+  }
+
+  Future<int> deletePackingList(PackingListsCompanion entry) {
+    log("delete item: $entry");
+    return delete(packingLists).delete(entry);
+  }
+
+  Stream<List<PackingListItem>> watchPackingListItemsEntries(int id) {
+    final query = select(packingListItems)..where((tbl) => tbl.id.equals(id));
+
+    return query.watch();
+  }
+
+  Future<int> addPackingListItem(PackingListItemsCompanion entry) {
+    return into(packingListItems).insert(entry);
+  }
 }
 
-// this annotation tells drift to prepare a database class that uses both of the
-// tables we just defined. We'll see how to use that database class in a moment.
-@DriftDatabase(tables: [Todos, Categories])
-class MyDatabase {
-
-}

@@ -1,5 +1,10 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:pack_it_v1/utils/utility.dart';
+import 'package:provider/provider.dart';
+import 'dart:developer';
+
+import '../db/db.dart';
 
 class AddPackList extends StatelessWidget {
   @override
@@ -39,6 +44,8 @@ class MyCustomFormState extends State<MyCustomForm> {
   final _formKey = GlobalKey<FormState>();
 
   final createListController = TextEditingController();
+
+  MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
 
   @override
   void dispose() {
@@ -81,9 +88,10 @@ class MyCustomFormState extends State<MyCustomForm> {
                   ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
+                        _createPackingListEntry();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                              content: Text('${createListController.text} created'),
+                              content: Text('Created'),
                         ));
                         Navigator.pop(context);
                       }
@@ -95,5 +103,14 @@ class MyCustomFormState extends State<MyCustomForm> {
         ],
       ),
     );
+  }
+  void _createPackingListEntry() {
+    if (createListController.text.isNotEmpty) {
+      log('_createPackingListEntry');
+      // We write the entry here. Notice how we don't have to call setState()
+      // or anything - moor will take care of updating the list automatically.
+      db.addPackingList(PackingListsCompanion(title: Value.ofNullable(createListController.text)));
+      createListController.clear();
+    }
   }
 }

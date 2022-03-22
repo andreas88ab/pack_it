@@ -6,7 +6,11 @@ import 'dart:developer';
 
 import '../db/db.dart';
 
-class AddPackList extends StatelessWidget {
+class EditPackList extends StatelessWidget {
+  const EditPackList({Key? key, required this.packingList}) : super(key: key);
+
+  final PackingList packingList;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,7 +22,7 @@ class AddPackList extends StatelessWidget {
               SizedBox(
                 height: 100,
               ),
-              MyCustomForm(),
+              MyCustomForm(packingList: packingList),
             ],
           )),
     );
@@ -27,37 +31,42 @@ class AddPackList extends StatelessWidget {
 
 // Create a Form widget.
 class MyCustomForm extends StatefulWidget {
-  const MyCustomForm({Key? key}) : super(key: key);
+  const MyCustomForm({Key? key, required this.packingList}) : super(key: key);
+
+  final PackingList packingList;
 
   @override
   MyCustomFormState createState() {
-    return MyCustomFormState();
+    return MyCustomFormState(packingList: packingList);
   }
 }
 
 class MyCustomFormState extends State<MyCustomForm> {
-  // Create a global key that uniquely identifies the Form widget
-  // and allows validation of the form.
-  //
-  // Note: This is a GlobalKey<FormState>,
-  // not a GlobalKey<MyCustomFormState>.
+  MyCustomFormState({required this.packingList});
+
+  late PackingList packingList;
+
   final _formKey = GlobalKey<FormState>();
 
-  final createListController = TextEditingController();
+  late TextEditingController createListController;
+
+  @override
+  void initState() {
+    this.createListController = TextEditingController(text: packingList.title);
+    this.packingList = packingList;
+    super.initState();
+  }
 
   MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
 
   @override
   void dispose() {
-    // Clean up the controller when the widget is disposed.
     createListController.dispose();
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    // Build a Form widget using the _formKey created above.
     return Form(
       key: _formKey,
       child: Column(
@@ -69,49 +78,55 @@ class MyCustomFormState extends State<MyCustomForm> {
               // The validator receives the text that the user has entered.
               validator: (value) {
                 if (Utility.hasValue(value)) {
-                  return 'Please enter a list name';
+                  return 'List name';
                 }
                 return null;
               },
               controller: createListController,
               autofocus: true,
-              decoration: InputDecoration(
-                hintText: "Add list name",
-              ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 30.0),
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        _createPackingListEntry();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text('${createListController.text} created'),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    _editPackingListEntry();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Edited'),
+                    ));
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Edit'),
+              ),
+              Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: ElevatedButton.icon(
+                      onPressed: () {
+                        db.deletePackingList(
+                            PackingListsCompanion(id: Value.ofNullable(packingList.id)));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Deleted'),
                         ));
                         Navigator.pop(context);
-                      }
-                    },
-                    child: const Text('Create'),
-                  )
-                ]),
+                      },
+                      icon: Icon(Icons.delete),
+                      label: const Text('Delete'),
+                      style: ElevatedButton.styleFrom(primary: Colors.red)))
+            ]),
           ),
         ],
       ),
     );
   }
-  void _createPackingListEntry() {
 
-
+  void _editPackingListEntry() {
     if (createListController.text.isNotEmpty) {
-      log('_createPackingListEntry');
-      // We write the entry here. Notice how we don't have to call setState()
-      // or anything - moor will take care of updating the list automatically.
-      db.addPackingList(PackingListsCompanion(title: Value.ofNullable(createListController.text)));
+      db.editPackingList(PackingListsCompanion(
+          id: Value.ofNullable(packingList.id),
+          title: Value.ofNullable(createListController.text)));
       createListController.clear();
     }
   }

@@ -1,30 +1,30 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:developer';
-
 import '../db/db.dart';
+import '../page/view_pack_list.dart';
 
-class PackingListWidget extends StatefulWidget {
-  const PackingListWidget({Key? key}) : super(key: key);
+class PackingListWidgetStream extends StatefulWidget {
+  const PackingListWidgetStream({Key? key}) : super(key: key);
 
   @override
-  PackingListWidgetState createState() {
-    return PackingListWidgetState();
+  PackingListWidgetStreamState createState() {
+    return PackingListWidgetStreamState();
   }
 }
 
-class PackingListWidgetState extends State<PackingListWidget> {
+class PackingListWidgetStreamState extends State<PackingListWidgetStream> {
   MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      flex: 2,
-      child: FutureBuilder<List<PackingList>>(
+      child: StreamBuilder<List<PackingList>>(
+        stream: db.watchPackingListEntries(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const SizedBox();
+            return const SizedBox(
+              child: Text("No lists yet...create some"),
+            );
           }
 
           return ListView.builder(
@@ -34,25 +34,27 @@ class PackingListWidgetState extends State<PackingListWidget> {
               if (snapshot.data == null) {
                 return Text("EMPTY");
               }
-              ;
+
               final PackingList item = snapshot.data![index];
 
               return Column(
                 children: <Widget>[
                   SizedBox(
                       width: MediaQuery.of(context).size.width,
-                      child: ListTile(
+                      child: Card(child: ListTile(
                           title: SizedBox(width: 50, child: Text(item.title)),
                           subtitle: new Text('Number of items'),
                           onTap: () {
-                            log("$item.title - clicked");
-                          }))
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ViewPackList(packingListId: item.id)),
+                            );
+                          })))
                 ],
               );
             },
           );
         },
-        future: db.allPackingListEntries,
       ),
     );
   }
