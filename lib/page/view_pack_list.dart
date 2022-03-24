@@ -37,11 +37,23 @@ class MyCustomFormState extends State<MyCustomForm> {
 
   MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
 
+  late bool nameValidated;
+
   @override
   void initState() {
-    this.packingListId = packingListId;
-    this.controller = TextEditingController();
     super.initState();
+    this.packingListId = packingListId;
+    this.nameValidated = false;
+    db.getPackingList(packingListId).then((value) => controller = TextEditingController(text: value.title));
+    controller = TextEditingController();
+    controller.addListener(_validate);
+  }
+
+  void _validate() {
+    setState(() {
+      nameValidated = controller.text.length > 6;
+    });
+    print('Text ${controller.text.length} value ${nameValidated}');
   }
 
   @override
@@ -65,7 +77,7 @@ class MyCustomFormState extends State<MyCustomForm> {
           }
 
           PackingList pl = snapshot.requireData;
-          
+
           return new Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),
               child: Column(
@@ -78,7 +90,7 @@ class MyCustomFormState extends State<MyCustomForm> {
                   ElevatedButton(
                       onPressed: () =>
                       {
-                        openDialog(context, pl.id),
+                        openDialog(context, pl.id, nameValidated),
                       },
                       child: Icon(Icons.edit))
                 ],
@@ -86,19 +98,72 @@ class MyCustomFormState extends State<MyCustomForm> {
         });
   }
 
-  Future openDialog(BuildContext context, int id) => showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-            title: Text('Packing list name'),
-            content: TextField(
-              autofocus: true,
-              controller: controller,
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => submit(context, id), child: Text('Submit'))
-            ],
-          ));
+  Future openDialog(BuildContext context, int id, bool val) =>
+      showDialog(
+          context: context,
+          builder: (context) =>
+              PackingListEditDialogBox(controller: controller, packingListId: packingListId,)
+      );
+}
+
+class PackingListEditDialogBox extends StatefulWidget {
+  const PackingListEditDialogBox({Key? key, required this.controller, required this.packingListId})
+      : super(key: key);
+
+  final TextEditingController controller;
+  final int packingListId;
+
+  @override
+  _PackingListEditDialogBoxState createState() =>
+      _PackingListEditDialogBoxState(controller: controller, packingListId: packingListId);
+}
+
+class _PackingListEditDialogBoxState extends State<PackingListEditDialogBox> {
+  _PackingListEditDialogBoxState({required this.controller, required this.packingListId});
+
+  late int packingListId;
+  late TextEditingController controller;
+
+  bool nameValidated = false;
+
+  void _validate() {
+    setState(() {
+      nameValidated = controller.text.length > 6;
+    });
+  }
+
+  MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
+
+  @override
+  void initState() {
+    super.initState();
+    this.controller = controller;
+    controller.addListener(_validate);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Packing list name'),
+      content: Container(
+        child: TextField(
+          autofocus: true,
+          controller: controller,
+          decoration: InputDecoration(
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: nameValidated ? Colors.blue : Colors.red,),
+              )),
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: nameValidated ? () => submit(context, packingListId) : null,
+            child: Text('Submit')
+        )
+      ],
+    );
+  }
 
   void submit(BuildContext context, int id) {
     _editPackingListEntry(id);
@@ -108,8 +173,7 @@ class MyCustomFormState extends State<MyCustomForm> {
   void _editPackingListEntry(int id) {
     if (controller.text.isNotEmpty) {
       db.editPackingList(PackingListsCompanion(
-          id: Value.ofNullable(id),
-          title: Value.ofNullable(controller.text)));
+          id: Value.ofNullable(id), title: Value.ofNullable(controller.text)));
       controller.clear();
     }
   }
