@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../db/db.dart';
-import 'dart:developer';
+import '../utils/utility.dart';
 
 class ViewPackList extends StatelessWidget {
   const ViewPackList({Key? key, required this.packingListId}) : super(key: key);
@@ -12,24 +12,24 @@ class ViewPackList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: MyCustomForm(packingListId: packingListId),
+      body: ViewPacklistForm(packingListId: packingListId),
     );
   }
 }
 
-class MyCustomForm extends StatefulWidget {
-  const MyCustomForm({Key? key, required this.packingListId}) : super(key: key);
+class ViewPacklistForm extends StatefulWidget {
+  const ViewPacklistForm({Key? key, required this.packingListId}) : super(key: key);
 
   final int packingListId;
 
   @override
-  MyCustomFormState createState() {
-    return MyCustomFormState(packingListId: packingListId);
+  ViewPacklistFormState createState() {
+    return ViewPacklistFormState(packingListId: packingListId);
   }
 }
 
-class MyCustomFormState extends State<MyCustomForm> {
-  MyCustomFormState({required this.packingListId});
+class ViewPacklistFormState extends State<ViewPacklistForm> {
+  ViewPacklistFormState({required this.packingListId});
 
   late int packingListId;
 
@@ -37,23 +37,12 @@ class MyCustomFormState extends State<MyCustomForm> {
 
   MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
 
-  late bool nameValidated;
-
   @override
   void initState() {
     super.initState();
     this.packingListId = packingListId;
-    this.nameValidated = false;
     db.getPackingList(packingListId).then((value) => controller = TextEditingController(text: value.title));
     controller = TextEditingController();
-    controller.addListener(_validate);
-  }
-
-  void _validate() {
-    setState(() {
-      nameValidated = controller.text.length > 6;
-    });
-    print('Text ${controller.text.length} value ${nameValidated}');
   }
 
   @override
@@ -90,7 +79,7 @@ class MyCustomFormState extends State<MyCustomForm> {
                   ElevatedButton(
                       onPressed: () =>
                       {
-                        openDialog(context, pl.id, nameValidated),
+                        openDialog(context, pl.id),
                       },
                       child: Icon(Icons.edit))
                 ],
@@ -98,7 +87,7 @@ class MyCustomFormState extends State<MyCustomForm> {
         });
   }
 
-  Future openDialog(BuildContext context, int id, bool val) =>
+  Future openDialog(BuildContext context, int id) =>
       showDialog(
           context: context,
           builder: (context) =>
@@ -121,14 +110,15 @@ class PackingListEditDialogBox extends StatefulWidget {
 class _PackingListEditDialogBoxState extends State<PackingListEditDialogBox> {
   _PackingListEditDialogBoxState({required this.controller, required this.packingListId});
 
+  final _formKey = GlobalKey<FormState>();
+
   late int packingListId;
   late TextEditingController controller;
-
-  bool nameValidated = false;
+  Color validationColor = Colors.blue;
 
   void _validate() {
     setState(() {
-      nameValidated = controller.text.length > 6;
+      validationColor = Utility.getValidationColorPackingListName(controller.text);
     });
   }
 
@@ -145,28 +135,41 @@ class _PackingListEditDialogBoxState extends State<PackingListEditDialogBox> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Packing list name'),
-      content: Container(
-        child: TextField(
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          validator: (value) {
+            return Utility.getValidationTextPackingListName(value);
+          },
+          autocorrect: true,
           autofocus: true,
           controller: controller,
           decoration: InputDecoration(
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
-                  color: nameValidated ? Colors.blue : Colors.red,),
+                  color: validationColor),
               )),
         ),
       ),
       actions: [
-        TextButton(
-            onPressed: nameValidated ? () => submit(context, packingListId) : null,
-            child: Text('Submit')
-        )
+        ElevatedButton(
+          onPressed: () {
+            // Validate returns true if the form is valid, or false otherwise.
+            if (_formKey.currentState!.validate()) {
+              submit(context, packingListId);
+            }
+          },
+          child: const Text('Submit'),
+        ),
       ],
     );
   }
 
   void submit(BuildContext context, int id) {
     _editPackingListEntry(id);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Name changed'),
+    ));
     Navigator.of(context).pop();
   }
 
@@ -174,7 +177,6 @@ class _PackingListEditDialogBoxState extends State<PackingListEditDialogBox> {
     if (controller.text.isNotEmpty) {
       db.editPackingList(PackingListsCompanion(
           id: Value.ofNullable(id), title: Value.ofNullable(controller.text)));
-      controller.clear();
     }
   }
 }

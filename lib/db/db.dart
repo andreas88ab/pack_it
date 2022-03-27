@@ -55,7 +55,6 @@ class MyDatabase extends _$MyDatabase {
   }
 
   Future<bool> editPackingList(PackingListsCompanion entry) {
-    log("update item: $entry");
     return update(packingLists).replace(entry);
   }
 

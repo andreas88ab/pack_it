@@ -2,8 +2,6 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:pack_it_v1/utils/utility.dart';
 import 'package:provider/provider.dart';
-import 'dart:developer';
-
 import '../db/db.dart';
 
 class AddPackList extends StatelessWidget {
@@ -18,7 +16,7 @@ class AddPackList extends StatelessWidget {
               SizedBox(
                 height: 100,
               ),
-              MyCustomForm(),
+              AddPackListForm(),
             ],
           )),
     );
@@ -26,21 +24,16 @@ class AddPackList extends StatelessWidget {
 }
 
 // Create a Form widget.
-class MyCustomForm extends StatefulWidget {
-  const MyCustomForm({Key? key}) : super(key: key);
+class AddPackListForm extends StatefulWidget {
+  const AddPackListForm({Key? key}) : super(key: key);
 
   @override
-  MyCustomFormState createState() {
-    return MyCustomFormState();
+  AddPackListFormState createState() {
+    return AddPackListFormState();
   }
 }
 
-class MyCustomFormState extends State<MyCustomForm> {
-  // Create a global key that uniquely identifies the Form widget
-  // and allows validation of the form.
-  //
-  // Note: This is a GlobalKey<FormState>,
-  // not a GlobalKey<MyCustomFormState>.
+class AddPackListFormState extends State<AddPackListForm> {
   final _formKey = GlobalKey<FormState>();
 
   final createListController = TextEditingController();
@@ -49,15 +42,12 @@ class MyCustomFormState extends State<MyCustomForm> {
 
   @override
   void dispose() {
-    // Clean up the controller when the widget is disposed.
     createListController.dispose();
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    // Build a Form widget using the _formKey created above.
     return Form(
       key: _formKey,
       child: Column(
@@ -66,13 +56,10 @@ class MyCustomFormState extends State<MyCustomForm> {
           new SizedBox(
             height: 70,
             child: TextFormField(
-              // The validator receives the text that the user has entered.
               validator: (value) {
-                if (Utility.hasValue(value)) {
-                  return 'Please enter a list name';
-                }
-                return null;
+                return Utility.getValidationTextPackingListName(value);
               },
+              autocorrect: true,
               controller: createListController,
               autofocus: true,
               decoration: InputDecoration(
@@ -91,7 +78,7 @@ class MyCustomFormState extends State<MyCustomForm> {
                         _createPackingListEntry();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                              content: Text('Created'),
+                              content: Text('Created new list'),
                         ));
                         Navigator.pop(context);
                       }
@@ -106,9 +93,6 @@ class MyCustomFormState extends State<MyCustomForm> {
   }
   void _createPackingListEntry() {
     if (createListController.text.isNotEmpty) {
-      log('_createPackingListEntry');
-      // We write the entry here. Notice how we don't have to call setState()
-      // or anything - moor will take care of updating the list automatically.
       db.addPackingList(PackingListsCompanion(title: Value.ofNullable(createListController.text)));
       createListController.clear();
     }
