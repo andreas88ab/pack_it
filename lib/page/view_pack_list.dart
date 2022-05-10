@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:pack_it_v1/widget/packing_list_item_widget_stream.dart';
 import 'package:provider/provider.dart';
 import '../db/db.dart';
 import '../utils/utility.dart';
@@ -81,7 +82,9 @@ class ViewPacklistFormState extends State<ViewPacklistForm> {
                       {
                         openDialog(context, pl.id),
                       },
-                      child: Icon(Icons.edit))
+                      child: Icon(Icons.edit)
+                  ),
+                  PackingListItemWidgetStream(packingListId: pl.id),
                 ],
               ));
         });

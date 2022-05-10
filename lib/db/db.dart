@@ -30,6 +30,7 @@ class MyDatabase extends _$MyDatabase {
         await m.createAll();
         await into(packingLists).insert(PackingListsCompanion.insert(title: "Test packinglist"));
         await into(packingListItems).insert(PackingListItemsCompanion.insert(packingListId: 1, title: "Test packinglistitem"));
+        await into(packingListItems).insert(PackingListItemsCompanion.insert(packingListId: 1, title: "Test 2 packinglistitem"));
       }
   );
 
@@ -63,8 +64,8 @@ class MyDatabase extends _$MyDatabase {
     return delete(packingLists).delete(entry);
   }
 
-  Stream<List<PackingListItem>> watchPackingListItemsEntries(int id) {
-    final query = select(packingListItems)..where((tbl) => tbl.id.equals(id));
+  Stream<List<PackingListItem>> watchPackingListItemsEntries(int packingListId) {
+    final query = select(packingListItems)..where((tbl) => tbl.packingListId.equals(packingListId));
 
     return query.watch();
   }
