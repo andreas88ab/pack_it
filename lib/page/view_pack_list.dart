@@ -4,6 +4,7 @@ import 'package:pack_it_v1/widget/packing_list_item_widget_stream.dart';
 import 'package:provider/provider.dart';
 import '../db/db.dart';
 import '../utils/utility.dart';
+import 'add_pack_list_item.dart';
 
 class ViewPackList extends StatelessWidget {
   const ViewPackList({Key? key, required this.packingListId}) : super(key: key);
@@ -19,7 +20,8 @@ class ViewPackList extends StatelessWidget {
 }
 
 class ViewPacklistForm extends StatefulWidget {
-  const ViewPacklistForm({Key? key, required this.packingListId}) : super(key: key);
+  const ViewPacklistForm({Key? key, required this.packingListId})
+      : super(key: key);
 
   final int packingListId;
 
@@ -42,7 +44,9 @@ class ViewPacklistFormState extends State<ViewPacklistForm> {
   void initState() {
     super.initState();
     this.packingListId = packingListId;
-    db.getPackingList(packingListId).then((value) => controller = TextEditingController(text: value.title));
+    db
+        .getPackingList(packingListId)
+        .then((value) => controller = TextEditingController(text: value.title));
     controller = TextEditingController();
   }
 
@@ -68,38 +72,50 @@ class ViewPacklistFormState extends State<ViewPacklistForm> {
 
           PackingList pl = snapshot.requireData;
 
-          return new Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 100,
-                  ),
-                  Text(pl.title),
-                  ElevatedButton(
-                      onPressed: () =>
-                      {
-                        openDialog(context, pl.id),
-                      },
-                      child: Icon(Icons.edit)
-                  ),
-                  PackingListItemWidgetStream(packingListId: pl.id),
-                ],
-              ));
+          return new Scaffold(
+              floatingActionButton: FloatingActionButton(
+                child: Icon(Icons.add),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) {
+                      return AddPackListItem(packingListId: packingListId,);
+                    }),
+                  );
+                },
+              ),
+              body: Builder(
+                  builder: (context) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 100,
+                          ),
+                          Text(pl.title),
+                          ElevatedButton(
+                              onPressed: () => {
+                                    openDialog(context, pl.id),
+                                  },
+                              child: Icon(Icons.edit)),
+                          PackingListItemWidgetStream(packingListId: pl.id),
+                        ],
+                      ))));
         });
   }
 
-  Future openDialog(BuildContext context, int id) =>
-      showDialog(
-          context: context,
-          builder: (context) =>
-              PackingListEditDialogBox(controller: controller, packingListId: packingListId,)
-      );
+  Future openDialog(BuildContext context, int id) => showDialog(
+      context: context,
+      builder: (context) => PackingListEditDialogBox(
+            controller: controller,
+            packingListId: packingListId,
+          ));
 }
 
 class PackingListEditDialogBox extends StatefulWidget {
-  const PackingListEditDialogBox({Key? key, required this.controller, required this.packingListId})
+  const PackingListEditDialogBox(
+      {Key? key, required this.controller, required this.packingListId})
       : super(key: key);
 
   final TextEditingController controller;
@@ -107,11 +123,13 @@ class PackingListEditDialogBox extends StatefulWidget {
 
   @override
   _PackingListEditDialogBoxState createState() =>
-      _PackingListEditDialogBoxState(controller: controller, packingListId: packingListId);
+      _PackingListEditDialogBoxState(
+          controller: controller, packingListId: packingListId);
 }
 
 class _PackingListEditDialogBoxState extends State<PackingListEditDialogBox> {
-  _PackingListEditDialogBoxState({required this.controller, required this.packingListId});
+  _PackingListEditDialogBoxState(
+      {required this.controller, required this.packingListId});
 
   final _formKey = GlobalKey<FormState>();
 
@@ -121,7 +139,8 @@ class _PackingListEditDialogBoxState extends State<PackingListEditDialogBox> {
 
   void _validate() {
     setState(() {
-      validationColor = Utility.getValidationColorPackingListName(controller.text);
+      validationColor =
+          Utility.getValidationColorPackingListName(controller.text);
     });
   }
 
@@ -149,9 +168,8 @@ class _PackingListEditDialogBoxState extends State<PackingListEditDialogBox> {
           controller: controller,
           decoration: InputDecoration(
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: validationColor),
-              )),
+            borderSide: BorderSide(color: validationColor),
+          )),
         ),
       ),
       actions: [

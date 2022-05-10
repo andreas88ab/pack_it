@@ -22,5 +22,15 @@ class Utility {
     }
     return null;
   }
+
+  static String? getValidationTextPackingListItemName(String? text) {
+    if (Utility.hasNoValue(text)) {
+      return 'Please enter a list item name';
+    }
+    if (!Utility.validatePackingListName(text)) {
+      return 'Please enter a list item name longer than 6 char';
+    }
+    return null;
+  }
 }
 
