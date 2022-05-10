@@ -4,7 +4,8 @@ import '../db/db.dart';
 import '../page/view_pack_list.dart';
 
 class PackingListItemWidgetStream extends StatefulWidget {
-  const PackingListItemWidgetStream({Key? key, required this.packingListId}) : super(key: key);
+  const PackingListItemWidgetStream({Key? key, required this.packingListId})
+      : super(key: key);
 
   final int packingListId;
 
@@ -14,8 +15,10 @@ class PackingListItemWidgetStream extends StatefulWidget {
   }
 }
 
-class PackingListItemWidgetStreamState extends State<PackingListItemWidgetStream> {
+class PackingListItemWidgetStreamState
+    extends State<PackingListItemWidgetStream> {
   PackingListItemWidgetStreamState({required this.packingListId});
+
   MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
 
   late int packingListId;
@@ -52,14 +55,27 @@ class PackingListItemWidgetStreamState extends State<PackingListItemWidgetStream
                 children: <Widget>[
                   SizedBox(
                       width: MediaQuery.of(context).size.width,
-                      child: Card(child: ListTile(
-                          title: SizedBox(width: 50, child: Text(item.title)),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ViewPackList(packingListId: item.id)),
-                            );
-                          })))
+                      child: Card(
+                          child: ListTile(
+                              leading: Checkbox(
+                                value: false,
+                                onChanged: (bool? valuer) {},
+                              ),
+                              title:
+                                  SizedBox(width: 50, child: Text(item.title)),
+                              subtitle: Text('Antall 2'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  IconButton(
+                                    icon: Icon(Icons.more_vert),
+                                    onPressed: () {
+
+                                    },
+                                  ),
+                                ],
+                              ),
+                              )))
                 ],
               );
             },

@@ -4,8 +4,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:drift/drift.dart';
 import 'dart:io';
-import 'dart:developer';
-
 part 'db.g.dart';
 
 LazyDatabase _openConnection() {
@@ -60,7 +58,6 @@ class MyDatabase extends _$MyDatabase {
   }
 
   Future<int> deletePackingList(PackingListsCompanion entry) {
-    log("delete item: $entry");
     return delete(packingLists).delete(entry);
   }
 
@@ -74,4 +71,3 @@ class MyDatabase extends _$MyDatabase {
     return into(packingListItems).insert(entry);
   }
 }
-
