@@ -4,12 +4,13 @@ import '../db/db.dart';
 import '../page/view_pack_list.dart';
 
 class PackingListWidgetStream extends StatefulWidget {
-  const PackingListWidgetStream({Key? key}) : super(key: key);
+
+  const PackingListWidgetStream(this.input_value);
+
+  final String input_value;
 
   @override
-  PackingListWidgetStreamState createState() {
-    return PackingListWidgetStreamState();
-  }
+  PackingListWidgetStreamState createState() => PackingListWidgetStreamState();
 }
 
 class PackingListWidgetStreamState extends State<PackingListWidgetStream> {
@@ -36,6 +37,10 @@ class PackingListWidgetStreamState extends State<PackingListWidgetStream> {
               }
 
               final PackingList item = snapshot.data![index];
+
+              if (!item.title.contains(widget.input_value)) {
+                return SizedBox.shrink();
+              }
 
               return Column(
                 children: <Widget>[

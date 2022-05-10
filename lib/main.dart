@@ -36,6 +36,7 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   MyDatabase get db => Provider.of<MyDatabase>(context, listen: false);
+  String _input_value = "";
 
   @override
   Widget build(BuildContext context) {
@@ -93,12 +94,17 @@ class HomePageState extends State<HomePage> {
                             borderRadius: BorderRadius.circular(10)),
                         hintText: 'Search',
                       ),
+                      onChanged: (text) {
+                        setState(() {
+                          _input_value = text;
+                        });
+                    }
                     ),
                     SizedBox(height: 20),
                     Text('Your lists',
                         style: TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 20)),
-                    PackingListWidgetStream(),
+                    PackingListWidgetStream(_input_value),
                   ],
                 ))));
   }
