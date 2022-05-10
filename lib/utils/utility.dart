@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Utility {
-  static bool hasValue(String? text) {
+  static bool hasNoValue(String? text) {
     return text == null || text.isEmpty;
   }
 
@@ -10,11 +10,11 @@ class Utility {
   }
 
   static bool validatePackingListName(String? text) {
-    return hasValue(text) && text!.length > 6;
+    return text!.length > 6;
   }
 
   static String? getValidationTextPackingListName(String? text) {
-    if (Utility.hasValue(text)) {
+    if (Utility.hasNoValue(text)) {
       return 'Please enter a list name';
     }
     if (!Utility.validatePackingListName(text)) {
